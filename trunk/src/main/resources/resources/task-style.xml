@@ -1,0 +1,23 @@
+<mxStylesheet>
+	<include name="/resources/basic-style.xml"/>
+	<add as="taskVertex" extend="defaultVertex">
+    <add as="shape" value="ellipse"/>
+		<add as="strokeColor" value="#000000"/>
+		<add as="fillColor" value="#66FF33"/>
+    <add as="perimeter" value="ellipsePerimeter"/>
+	</add>
+  <add as="startTaskVertex" extend="taskVertex">
+    <add as="fillColor" value="#3366FF"/>
+  </add>
+  <add as="endTaskVertex" extend="taskVertex">
+    <add as="fillColor" value="#FFCC33"/>
+  </add>
+  <add as="errorTaskVertex" extend="taskVertex">
+    <add as="fillColor" value="#ff0033"/>
+  </add>
+	<add as="connection" extend="defaultEdge">
+		<add as="rounded" value="1"/>
+    <add as="shape" value="connector"/>
+    <add as="endArrow" value="classic"/>
+	</add>
+</mxStylesheet>
