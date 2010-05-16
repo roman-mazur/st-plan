@@ -1,0 +1,18 @@
+<mxStylesheet>
+	<include name="/resources/basic-style.xml"/>
+	<add as="pVertex" extend="defaultVertex">
+    <add as="shape" value="rectangle"/>
+		<add as="strokeColor" value="#000000"/>
+		<add as="fillColor" value="#66FF33"/>
+    <add as="perimeter" value="ellipsePerimeter"/>
+	</add>
+  <add as="errorPVertex" extend="pVertex">
+    <add as="fillColor" value="#ff0033"/>
+  </add>
+	<add as="connection" extend="defaultEdge">
+		<add as="rounded" value="1"/>
+    <add as="shape" value="connector"/>
+    <add as="endArrow" value="classic"/>
+    <add as="startArrow" value="classic"/>
+	</add>
+</mxStylesheet>
