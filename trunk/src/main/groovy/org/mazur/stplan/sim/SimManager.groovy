@@ -9,61 +9,78 @@ import org.jfree.data.gantt.Task;
  */
 class SimManager {
   
-  private def tasksMap = [:]
-  
   SimState simState
   
-  private String taskName(final def p) { return p.value.name }
+  public int getTime() { return simState.time }
+  
+  private String taskName(final def p, final def task) { return p.value.name + "($task.value.name)" }
   
   private void log(def message) { simState.log(message) }
-  
-  private def findPath(def source, def target) {
-    def path = []
-    def src = source
-    while (src != target) {
-      src = simState.getNextVertex(src, target)
-      path += src
-    }
-    return path
-  }
   
   private def resolvePath(def task, def targetProcessor) {
     def paths = [:]
     task.inputs().each {
-      def sourceProcessor = tasksMap[it.source]
-      paths[it.source] = findPath(sourceProcessor, targetProcessor)
+      def sourceProcessor = simState.getTaskProcessor(it.source)
+      paths[it.source] = simState.findPath(sourceProcessor, targetProcessor)
     }
     return paths
   }
   
   private def planTask(def task) {
     log "Plan $task"
-    def p = simState.selectProcessor(task)
+    def selection = simState.selectProcessor(task) 
+    def p = selection[0], delay = selection[1]
     log "Processor: $p"
     if (!p) { return null }
-    simState.useNode p
-    tasksMap[task] = p
+    
+    def diagramParts = []
     
     // make transitions
     def messagePaths = resolvePath(task, p)
-    log "Path: $messagePaths"
+    log "Transitions: $messagePaths"
+    int planTime = simState.time
+    messagePaths.each { def sourceTask, def path ->
+      if (path.size() < 2) { return }
+      int pt = simState.getTaskFinishTime(sourceTask)
+      int weight = (sourceTask.connections().find { it.target == task }).value as int
+      log "Transitions from $sourceTask ($weight)"
+      def source = path.remove(0)
+      while (source != p) {
+        def target = path.remove(0)
+        log "  --> to $target"
+        def rt = simState.resolveTransition(source, target, pt, weight)
+        pt = rt[0]
+        diagramParts += new TimeDescriptor(
+            type : "$source.value.name",
+            task : new Task("$sourceTask.value.name - $task.value.name ($target.value.name)", new Date(pt), new Date(pt + rt[1]))
+        )
+                      
+        source = target
+        pt += rt[1]
+      }
+      if (pt > planTime) { planTime = pt }
+    }
     
-    return new TimeDescriptor(type : "calc", task : new Task(taskName(p), new Date(System.currentTimeMillis() - 1000000), new Date()))
+    if (delay) { planTime += delay }
+    def taskWrapper = simState.useNode(task, p, planTime)
+
+    diagramParts += new TimeDescriptor(
+        type : "$p.value.name", 
+        task : new Task(taskName(p, task), new Date(taskWrapper.startTime), new Date(taskWrapper.finishTime))
+    )
+    return diagramParts
   }
   
   public def next() {
     simState.nextStep()
     def task = simState.nextTask()
-    def planned = []
     def out = []
     while (task) {
       def planResult = planTask(task)
       if (!planResult) { break }
       out += planResult
-      planned += task
       task = simState.nextTask()
     }
-    planned.each { simState.complete it }
     return out
   }
   

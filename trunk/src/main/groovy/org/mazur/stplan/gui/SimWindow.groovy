@@ -3,6 +3,7 @@ package org.mazur.stplan.gui
 import org.jfree.data.gantt.TaskSeries;
 
 import org.mazur.stplan.State
+import org.mazur.stplan.model.SystemParameters;
 import org.mazur.stplan.sim.SimManager;
 import org.mazur.stplan.sim.SimState;
 
@@ -26,9 +27,7 @@ class SimWindow {
 
   private IntervalCategoryDataset dataset = new TaskSeriesCollection()
   
-  private TaskSeries calculationTasks = new TaskSeries("Обислення")
-  
-  private ArrayList<TaskSeries> trasmitionTasksList = new ArrayList<TaskSeries>() 
+  private def seriesList = [:]
   
   private JFreeChart chart
   
@@ -41,29 +40,47 @@ class SimWindow {
   private def nextAction = swing.action(
     name : "Наступний крок",
     closure : {
-      addToSet simManager.next()
+      def data = simManager.next()
+      if (!data) {
+        GUIBuilder.locate swing.dialog(title : "Завершено", pack : true, visible : true) {
+          label("OK: " + simManager.time)
+        }
+        return
+      }
+      addToSet data
     }
   )
   
   private def allAction = swing.action(
     name : "До кінця",
     closure : {
-      // TODO start a queue
+      def waitD = swing.dialog(title : "Моделювання", pack : true, visible : true) {
+        borderLayout()
+        label(constraints : BorderLayout.NORTH, text : "Зачекайте будь ласка...")
+        progressBar(indeterminate : true)
+      }
+      GUIBuilder.locate waitD
+      def worker = new Thread(new CRunnable({
+        def result = simManager.all()
+        GUIBuilder.invokeSwing {
+          addToSet result
+          waitD.visible = false
+        }
+      }))
+      worker.start()
     }
   )
 
   private void addToSet(def data) {
     data?.each {
-      TaskSeries ts = null
-      if ("calc" == it.type) { ts = calculationTasks }
+      TaskSeries ts = seriesList[it.type]
       if (!ts) { return }
       ts.add it.task
     }
   }
   
-  public void init(final def taskM, final def processorM) {
-    dataset.add calculationTasks
-    chart = ChartFactory.createGanttChart("Діаграма Ганта", "Вузол", "Час", dataset, true, true, false)
+  public void init(final def taskM, final def processorM, final SystemParameters sysParams) {
+    State.INSTANCE.sysParams = sysParams
     
     def tq = State.INSTANCE.queueAlg.formQueue(taskM[0], taskM[1])
     tasksQueueMessage = tq[1]
@@ -74,6 +91,14 @@ class SimWindow {
       freeProcessors : pq[0],
       tasksQueue : tq[0]                    
     ))
+
+    (pq[0].sort {a,b-> a.value.name <=> b.value.name}).each {
+      TaskSeries ts = new TaskSeries("$it.value.name")
+      seriesList[it.value.name] = ts
+      dataset.add ts
+    }
+    chart = ChartFactory.createGanttChart("Діаграма Ганта", "Вузол", "Час", dataset, true, true, false)
+    
   }
   
   public void show() {

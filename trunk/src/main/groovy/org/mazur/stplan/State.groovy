@@ -1,6 +1,7 @@
 package org.mazur.stplan
 
 import org.mazur.stplan.model.ModelUtil;
+import org.mazur.stplan.model.SystemParameters 
 import org.mazur.stplan.model.TaskVertex
 
 /**
@@ -25,6 +26,8 @@ enum State {
     return [result, message.toString()]
   }
   
+  SystemParameters sysParams
+  
 }
 
 enum QueueAlg {
@@ -41,7 +44,7 @@ enum QueueAlg {
   }),
   READY("За часом готовності", { p, m ->
     ModelUtil mu = new ModelUtil()
-    def q = new ArrayList(mu.getReadyVertexes(p, m))
+    def q = new ArrayList(mu.getAllVertexes(p, m))
     def message = new StringBuilder()
     q.each { message << "$it \n" }
     return [q, message]
@@ -69,8 +72,23 @@ enum QueueAlg {
 }
 
 enum SelectProcessorAlg {
-  PRIORITY("За приорітетами ", { def freeProcessors, def task ->
-    return freeProcessors.max { a, b -> a.connections().size() <=> b.connections().size() }
+  PRIORITY("За приорітетами ", { def params ->
+    return [params.freeProcessors.max { a, b -> a.connections().size() <=> b.connections().size() }, 0]
+  }),
+  NEAR_WITH_ALL("Сусіднє призначення з у рахуванням усіх процесорів", { def params ->
+    if (params.firstStep) { return PRIORITY.select(params) }
+    def allP = []; allP += params.freeProcessors; allP += params.usedProcessors.keySet()
+    def calculateForP = { p ->
+      def upT = params.usedProcessors[p]
+      int startTime = upT ? upT : 0
+      int sendTime = (params.task.inputs().collect { [params.processorSelector(it.source), it.value as int] }).inject(0) { sum, value -> 
+        sum += params.distanceSelector(p, value[0]) * value[1] 
+      }
+      println "$p -> $startTime, $sendTime"
+      return [startTime, sendTime].max()
+    }
+    def result = allP.min { pa, pb -> calculateForP(pa) <=> calculateForP(pb) }
+    return [result, params.usedProcessors[result]]
   })
   
   def caption

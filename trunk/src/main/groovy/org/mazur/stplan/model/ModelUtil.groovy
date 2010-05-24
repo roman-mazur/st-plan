@@ -45,6 +45,17 @@ class ModelUtil {
     return result
   }
   
+  public List<TaskVertex> getAllVertexes(final Object parent, final def model) {
+    int n = model.getChildCount(parent)
+    List<TaskVertex> result = []
+    for (int i in 0..<n) {
+      def v = model.getChildAt(parent, i)
+      if (!(v instanceof TaskVertex)) { continue }
+      result += v
+    }
+    return result
+  }
+  
   public List<NodeVertex> getProcessors(final Object parent, final def model) {
     int n = model.getChildCount(parent)
     List<TaskVertex> result = []
