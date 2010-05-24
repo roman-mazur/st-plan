@@ -49,7 +49,13 @@ class ParametersDialog {
       button(constraints : BorderLayout.SOUTH, action : action(name : "OK", closure : {
         fields.each {
           def value = fieldsMap[it].text
-          if (value) { model[it] = value as float }
+          if (value) {
+            switch(value) {
+            case "true": model[it] = true; break 
+            case "false": model[it] = false; break 
+            default: model[it] = value as float; break 
+            }
+          }
         }
         dialog.visible = false
         listener(model)

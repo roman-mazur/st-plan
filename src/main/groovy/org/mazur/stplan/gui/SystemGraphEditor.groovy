@@ -2,8 +2,11 @@ package org.mazur.stplan.gui;
 
 import java.awt.Color;
 import java.awt.event.MouseEvent;
+import java.io.ObjectInputStream;
+import java.io.OutputStream;
 
 import org.mazur.stplan.model.NodeVertex;
+import org.mazur.stplan.model.SystemParameters;
 
 import com.mxgraph.model.mxGeometry;
 
@@ -17,6 +20,8 @@ public class SystemGraphEditor extends GraphEditor {
   /** Error cells set. */
   private def errorCells = new HashSet<NodeVertex>(), processed = new HashSet<NodeVertex>() 
 
+  private SystemParameters systemParameters = new SystemParameters()
+  
   /** Action to set current creation state to creating a new task. */
   private def newProcessorElementAction = swing.action(
     name : "Вузол",
@@ -29,6 +34,16 @@ public class SystemGraphEditor extends GraphEditor {
     closure : { creationState = null }
   )
   
+  /** Action to set current creation state to creating a new task. */
+  private def paramsAction = swing.action(
+    name : "Параметри",
+    closure : { 
+      new ParametersDialog(model : systemParameters, title : "Параметри системи").show {
+        systemParameters = it
+      }
+    }
+  )
+
   @Override
   protected void addElement(final ElementType type, final MouseEvent event) {
     switch (type) {
@@ -55,6 +70,7 @@ public class SystemGraphEditor extends GraphEditor {
       label(text : "Граф системи", border : emptyBorder(0, 20, 0, 20), foreground : Color.BLUE)
       button(action : cursorAction)
       button(action : newProcessorElementAction)
+      button(action : paramsAction)
     }
   }
   
@@ -102,4 +118,14 @@ public class SystemGraphEditor extends GraphEditor {
     graph.model.endUpdate()
   }
   
+  protected void saveData(final ObjectOutputStream out) throws IOException {
+    super.saveData out
+    out.writeObject systemParameters
+  }
+  
+  protected def loadData(final ObjectInputStream oi) {
+    super.loadData(oi)
+    this.systemParameters = oi.readObject()
+    return this
+  }
 }

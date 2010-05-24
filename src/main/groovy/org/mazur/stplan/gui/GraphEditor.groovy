@@ -153,8 +153,7 @@ abstract class GraphEditor {
   
   public void serialize(final OutputStream out) throws IOException {
     ObjectOutputStream oo = new ObjectOutputStream(out)
-    oo.writeInt getType()
-    oo.writeObject modelToArray()
+    saveData oo
   }
  
   public def getModel() { return graph.model }
@@ -167,14 +166,23 @@ abstract class GraphEditor {
     return type == 1 ? new TaskGraphEditor() : new SystemGraphEditor()
   }
   
-  public static load(final InputStream input) {
+  public static def load(final InputStream input) {
     ObjectInputStream oi = new ObjectInputStream(input)
     int type = oi.readInt()
     GraphEditor e = byType(type)
+    return e.loadData(oi)
+  }
+  
+  protected def loadData(final ObjectInputStream oi) {
     def data = oi.readObject()
-    e.graph.addCells data
-    e.validate()
-    return e
+    graph.addCells data
+    validate()
+    return this
+  }
+  
+  protected void saveData(final ObjectOutputStream oo) {
+    oo.writeInt getType()
+    oo.writeObject modelToArray()
   }
   
 }

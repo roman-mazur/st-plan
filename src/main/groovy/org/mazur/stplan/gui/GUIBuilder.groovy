@@ -7,7 +7,6 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 
 import javax.swing.JFileChooser;
-import javax.swing.JPanel;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
@@ -15,6 +14,7 @@ import javax.swing.SwingUtilities;
 import groovy.swing.SwingBuilder;
 
 import org.mazur.stplan.QueueAlg
+import org.mazur.stplan.SelectProcessorAlg 
 import org.mazur.stplan.State
 import org.mazur.stplan.generation.GenerationParameteres;
 import org.mazur.stplan.generation.GraphGenerator;
@@ -111,6 +111,25 @@ final class GUIBuilder {
     }
   )
   
+  /** Select the algorithm action. */
+  private static def selectAlgorithmAction = swing.action(
+    name : "Вибір алгоритму",
+    shortDescription : "Вибір алгоритму призначення",
+    closure : {
+      def dialog
+      dialog = swing.dialog(title : "Вибір алгоритму", visible : true, pack : true) {
+        gridLayout(rows : SelectProcessorAlg.values().length, cols : 1)
+        SelectProcessorAlg.values().each { alg ->
+          radioButton(selected : State.INSTANCE.selectProcessorAlg == alg, action : action(
+            name : alg.caption,
+            closure : { State.INSTANCE.selectProcessorAlg = alg; dialog.visible = false }
+          ))
+        }
+      }
+      locate dialog
+    }
+  )
+
   /** Select the queue action. */
   private static def generateGraphAction = swing.action(
     name : "Згенерувати граф задачі",
@@ -151,7 +170,8 @@ final class GUIBuilder {
       def sw = new SimWindow()
       def e = currentEditor()
       def pe = editors.find { it instanceof SystemGraphEditor }
-      sw.init([e.parent, e.model], [pe.parent, pe.model])
+      def sysParams = pe.systemParameters
+      sw.init([e.parent, e.model], [pe.parent, pe.model], sysParams)
       sw.show()
     }
   )
@@ -173,7 +193,7 @@ final class GUIBuilder {
     w.setLocation((scrWidth - ww) >> 1,(scrHeight - hh) >> 1)
   }
   
-  private static void invokeSwing(def c) {
+  public static void invokeSwing(def c) {
     SwingUtilities.invokeLater new CRunnable(c)
   }
   
@@ -208,6 +228,7 @@ final class GUIBuilder {
         menu(text : "Моделювання") {
           menuItem(startModellingAction)
           menuItem(selectQueueAction)
+          menuItem(selectAlgorithmAction)
           menuItem(generateGraphAction)
         }
         menu(text : "Статистика") {
