@@ -28,6 +28,9 @@ enum State {
   
   SystemParameters sysParams
   
+  @Override
+  String toString() { return "State: $queueAlg / $selectProcessorAlg" }
+  
 }
 
 enum QueueAlg {

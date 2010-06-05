@@ -56,6 +56,17 @@ class ModelUtil {
     return result
   }
   
+  public int getTotalGraphTime(final Object parent, final def model) {
+    int n = model.getChildCount(parent)
+    int result = 0
+    for (int i in 0..<n) {
+      def v = model.getChildAt(parent, i)
+      if (!(v instanceof TaskVertex)) { continue }
+      result += v.value.volume
+    }
+    return result
+  }
+
   public List<NodeVertex> getProcessors(final Object parent, final def model) {
     int n = model.getChildCount(parent)
     List<TaskVertex> result = []
