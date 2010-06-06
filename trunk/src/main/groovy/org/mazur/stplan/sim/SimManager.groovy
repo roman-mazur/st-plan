@@ -78,6 +78,7 @@ class SimManager {
     while (task) {
       def planResult = planTask(task)
       if (!planResult) { break }
+      simState.confirmTaskPlanned task
       out += planResult
       task = simState.nextTask()
     }

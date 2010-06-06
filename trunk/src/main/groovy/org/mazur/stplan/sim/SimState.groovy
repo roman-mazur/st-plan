@@ -50,10 +50,9 @@ class SimState {
   }
   
   def nextTask() {
-    def t = testNextTask() 
-    tasksQueue.remove(t)
-    return t
+    return testNextTask() 
   }
+  void confirmTaskPlanned(def t) { tasksQueue.remove(t) }
   
   int getTime() { return timeLine.time }
   
@@ -69,9 +68,13 @@ class SimState {
     log "Next step. Free P: $freeProcessors. Tasks: $tasksQueue."
     log "Time line: $timeLine"
     boolean hasReadyTasks = false
+    int counter = 400
     while (!hasReadyTasks) {
       timeLine.getCompletedTasksAndChangeTime().each { complete it.task }
-      hasReadyTasks = (testNextTask() != null || tasksQueue.empty)
+      def nt = testNextTask()
+      hasReadyTasks = (nt != null || tasksQueue.empty)
+      if (!hasReadyTasks) { counter-- }
+      if (!counter) { throw new RuntimeException("Cycle forever!!!") }
     }
   }
   
