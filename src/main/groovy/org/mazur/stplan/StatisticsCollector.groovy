@@ -13,7 +13,7 @@ import org.mazur.stplan.sim.SimState;
 
 def system = "c:/Users/MoRFey/Documents/mesh2d.g"
 
-def nn = [45, 54, 63, 72, 81, 90]
+def nn = [9, 18, 27, 36, 45, 54, 63, 72, 81, 90]
 
 def vertexWeightRange = 5..15
 
