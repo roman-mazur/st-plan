@@ -188,7 +188,6 @@ class SimState {
       }
     }
     
-    // FIXME incorrect min distances!!!!
     PathMetric[][] routingTable = minDistances(matrix)
     routingTable.each {
       println it
